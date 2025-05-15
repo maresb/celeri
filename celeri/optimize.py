@@ -938,6 +938,8 @@ def _tighten_kinematic_bounds(
     velocity_lower: float,
     tighten_all: bool = True,
     factor: float = 0.5,
+    iteration_number: int,
+    num_oob: int,
 ):
     assert factor > 0 and factor < 1
 
@@ -1229,7 +1231,7 @@ def minimize(
 
     solver = default_solve_kwargs.pop("solver")
 
-    for _num_iter in range(max_iter):
+    for iteration_number in range(max_iter):
         _custom_solve(
             minimizer.cp_problem,
             solver=solver,
@@ -1250,6 +1252,8 @@ def minimize(
             velocity_lower=velocity_lower,
             factor=reduction_factor,
             tighten_all=True,
+            iteration_number=iteration_number,
+            num_oob=num_oob,
         )
 
     return trace
