@@ -931,6 +931,10 @@ def build_cvxpy_problem(
     )
 
 
+class MinimizationComplete(Exception):
+    pass
+
+
 def _tighten_kinematic_bounds(
     minimizer: Minimizer,
     *,
@@ -942,6 +946,9 @@ def _tighten_kinematic_bounds(
     num_oob: int,
 ):
     assert factor > 0 and factor < 1
+
+    if num_oob == 0:
+        raise MinimizationComplete()
 
     def tighten_item(limits: VelocityLimitItem, coupling: CouplingItem):
         estimated = coupling.estimated_numpy()
@@ -1243,18 +1250,19 @@ def minimize(
             trace.print_last_progress()
 
         num_oob, total = minimizer.out_of_bounds()
-        if num_oob == 0:
-            break
 
-        _tighten_kinematic_bounds(
-            minimizer,
-            velocity_upper=velocity_upper,
-            velocity_lower=velocity_lower,
-            factor=reduction_factor,
-            tighten_all=True,
-            iteration_number=iteration_number,
-            num_oob=num_oob,
-        )
+        try:
+            _tighten_kinematic_bounds(
+                minimizer,
+                velocity_upper=velocity_upper,
+                velocity_lower=velocity_lower,
+                factor=reduction_factor,
+                tighten_all=True,
+                iteration_number=iteration_number,
+                num_oob=num_oob,
+            )
+        except MinimizationComplete:
+            break
 
     return trace
 
