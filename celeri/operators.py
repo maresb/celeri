@@ -1993,7 +1993,9 @@ def get_qp_slip_rate_inequality_operator_and_data_vector(
     return slip_rate_bound_matrix, slip_rate_bound_data_vector
 
 
-def get_eigenvalues_and_eigenvectors(n_eigenvalues, x, y, z, distance_exponent):
+def get_eigenvalues_and_eigenvectors(
+    n_eigenvalues, x, y, z, distance_exponent, areas=None, area_weighting="area"
+):
     n_tde = x.size
 
     # Calculate Cartesian distances between triangle centroids
@@ -2009,6 +2011,29 @@ def get_eigenvalues_and_eigenvectors(n_eigenvalues, x, y, z, distance_exponent):
 
     # Calculate correlation matrix
     correlation_matrix = np.exp(-(distance_matrix**distance_exponent))
+
+    # Apply area weighting
+    if areas is not None and area_weighting != "constant":
+        # Create area weights based on the weighting scheme
+        if area_weighting == "area":
+            # Weight by area
+            area_weights = areas.copy()
+        elif area_weighting == "inverse":
+            # Weight by inverse area, handling zero areas
+            area_weights = np.zeros_like(areas)
+            nonzero_mask = areas > 0
+            area_weights[nonzero_mask] = 1.0 / areas[nonzero_mask]
+        else:
+            # Default to area weighting for unknown schemes
+            area_weights = areas.copy()
+
+        # Handle edge case: zero areas should contribute zero
+        area_weights = np.where(areas == 0, 0.0, area_weights)
+
+        # Apply area weighting to correlation matrix
+        # Each element (i,j) gets weighted by sqrt(area_i * area_j)
+        area_weight_matrix = np.sqrt(np.outer(area_weights, area_weights))
+        correlation_matrix = correlation_matrix * area_weight_matrix
 
     # https://stackoverflow.com/questions/12167654/fastest-way-to-compute-k-largest-eigenvalues-and-corresponding-eigenvectors-with
     eigenvalues, eigenvectors = scipy.linalg.eigh(
@@ -2036,6 +2061,8 @@ def _store_eigenvectors_to_tde_slip(model: Model, operators: _OperatorBuilder):
             meshes[i].y_centroid,
             meshes[i].z_centroid,
             distance_exponent=1.0,  # Make this something set in mesh_parameters.json
+            areas=meshes[i].areas,
+            area_weighting=meshes[i].config.eigenmode_area_weighting,
         )
 
         # Create eigenvectors to TDE slip matrix
