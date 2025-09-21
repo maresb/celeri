@@ -2035,7 +2035,7 @@ def _store_eigenvectors_to_tde_slip(model: Model, operators: _OperatorBuilder):
         logger.info(f"Start: Eigenvectors to TDE slip for mesh: {meshes[i].file_name}")
         # Get eigenvalues and eigenvectors for current mesh
         eigenvalues, eigenvectors = get_eigenvalues_and_eigenvectors(
-            meshes[i].n_modes,
+            meshes[i].n_modes_total,  # Use total modes (strike-slip + dip-slip)
             meshes[i].x_centroid,
             meshes[i].y_centroid,
             meshes[i].z_centroid,
