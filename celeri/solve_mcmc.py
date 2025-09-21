@@ -65,6 +65,14 @@ def _get_eigen_modes(
         :, start_idx : start_idx + n_eigs
     ]
     eigenvalues = operators.eigen.eigenvalues[mesh][start_idx : start_idx + n_eigs]
+
+    # Verify that the number of eigenvalues matches the number of eigenvectors
+    if len(eigenvalues) != eigenvectors.shape[1]:
+        raise RuntimeError(
+            f"Eigenvalues and eigenvectors have different numbers of modes. "
+            f"Eigenvalues: {len(eigenvalues)}, eigenvectors: {eigenvectors.shape}"
+        )
+
     return _clean_operator(eigenvectors), _clean_operator(to_velocity), eigenvalues
 
 
