@@ -2012,34 +2012,42 @@ def get_eigenvalues_and_eigenvectors(
     # Calculate correlation matrix
     correlation_matrix = np.exp(-(distance_matrix**distance_exponent))
 
-    # Apply area weighting
+    # Set up mass matrix for proper eigenmode computation
     if areas is not None and area_weighting != "constant":
-        # Create area weights based on the weighting scheme
+        # Create mass matrix based on the weighting scheme
         if area_weighting == "area":
-            # Weight by area
-            area_weights = areas.copy()
+            # Standard mass matrix with areas (proper L2 inner product)
+            mass_weights = areas.copy()
         elif area_weighting == "inverse":
-            # Weight by inverse area, handling zero areas
-            area_weights = np.zeros_like(areas)
+            # Inverse area weighting (for recovering constant-like behavior)
+            mass_weights = np.zeros_like(areas)
             nonzero_mask = areas > 0
-            area_weights[nonzero_mask] = 1.0 / areas[nonzero_mask]
+            mass_weights[nonzero_mask] = 1.0 / areas[nonzero_mask]
         else:
             # Default to area weighting for unknown schemes
-            area_weights = areas.copy()
+            mass_weights = areas.copy()
 
-        # Handle edge case: zero areas should contribute zero
-        area_weights = np.where(areas == 0, 0.0, area_weights)
+        # Handle edge case: zero areas should be given a small positive value
+        # to maintain positive definiteness of the mass matrix
+        min_positive_weight = np.min(mass_weights[mass_weights > 0]) if np.any(mass_weights > 0) else 1.0
+        epsilon = 1e-8 * min_positive_weight  # Use a larger epsilon for numerical stability
+        mass_weights = np.where(mass_weights <= 0, epsilon, mass_weights)
+        
+        # Create mass matrix (diagonal matrix with mass weights)
+        mass_matrix = np.diag(mass_weights)
 
-        # Apply area weighting to correlation matrix
-        # Each element (i,j) gets weighted by sqrt(area_i * area_j)
-        area_weight_matrix = np.sqrt(np.outer(area_weights, area_weights))
-        correlation_matrix = correlation_matrix * area_weight_matrix
-
-    # https://stackoverflow.com/questions/12167654/fastest-way-to-compute-k-largest-eigenvalues-and-corresponding-eigenvectors-with
-    eigenvalues, eigenvectors = scipy.linalg.eigh(
-        correlation_matrix,
-        subset_by_index=[n_tde - n_eigenvalues, n_tde - 1],
-    )
+        # Solve generalized eigenvalue problem: K v = λ M v
+        # This gives proper eigenmodes with respect to the L2 inner product weighted by areas
+        eigenvalues, eigenvectors = scipy.linalg.eigh(
+            correlation_matrix, mass_matrix,
+            subset_by_index=[n_tde - n_eigenvalues, n_tde - 1],
+        )
+    else:
+        # Standard eigenvalue problem for constant weighting (backward compatibility)
+        eigenvalues, eigenvectors = scipy.linalg.eigh(
+            correlation_matrix,
+            subset_by_index=[n_tde - n_eigenvalues, n_tde - 1],
+        )
     eigenvalues = np.real(eigenvalues)
     eigenvectors = np.real(eigenvectors)
     eigenvectors[np.abs(eigenvectors) < 1e-6] = 0.0

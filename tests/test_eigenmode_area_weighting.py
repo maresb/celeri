@@ -1,4 +1,8 @@
-"""Test area weighting in eigenmode computation."""
+"""Test area weighting in eigenmode computation using proper mathematical formulation.
+
+This tests the corrected implementation using generalized eigenvalue problems
+for proper eigenmodes on meshes with area weighting.
+"""
 
 import numpy as np
 import pytest
@@ -38,7 +42,7 @@ def test_area_weighting_changes_result():
     z = np.array([0.0, 0.0, 0.0])
     areas = np.array([1.0, 10.0, 0.1])  # Very different areas
     
-    # Get eigenvalues with area weighting
+    # Get eigenvalues with area weighting (generalized eigenvalue problem)
     evals_area, evecs_area = get_eigenvalues_and_eigenvectors(
         n_eigenvalues=2, x=x, y=y, z=z, distance_exponent=1.0,
         areas=areas, area_weighting="area"
@@ -100,56 +104,54 @@ def test_zero_area_handling():
     assert np.all(np.isfinite(evecs_inv))
 
 
-def test_uniform_areas_gives_constant_behavior():
-    """Test that uniform areas with area weighting scales eigenvalues proportionally."""
-    # Create test data with uniform areas
+def test_eigenvector_orthogonality():
+    """Test that eigenvectors are orthogonal with respect to the mass matrix."""
+    # Create test data with varying areas
+    x = np.array([0.0, 1.0, 0.5, 2.0])
+    y = np.array([0.0, 0.0, 1.0, 1.0])
+    z = np.array([0.0, 0.0, 0.0, 0.0])
+    areas = np.array([1.0, 4.0, 0.25, 2.0])
+
+    # Get eigenvectors with area weighting
+    evals_area, evecs_area = get_eigenvalues_and_eigenvectors(
+        n_eigenvalues=3, x=x, y=y, z=z, distance_exponent=1.0,
+        areas=areas, area_weighting="area"
+    )
+
+    # Check orthogonality with respect to mass matrix: v_i^T M v_j = 0 for i != j
+    mass_matrix = np.diag(areas)
+    
+    # Test orthogonality between first two eigenvectors
+    orthogonality_01 = evecs_area[:, 0].T @ mass_matrix @ evecs_area[:, 1]
+    orthogonality_02 = evecs_area[:, 0].T @ mass_matrix @ evecs_area[:, 2]
+    orthogonality_12 = evecs_area[:, 1].T @ mass_matrix @ evecs_area[:, 2]
+    
+    # Should be approximately zero (within numerical precision)
+    assert abs(orthogonality_01) < 1e-12
+    assert abs(orthogonality_02) < 1e-12
+    assert abs(orthogonality_12) < 1e-12
+
+
+def test_mass_matrix_normalization():
+    """Test that eigenvectors are properly normalized with respect to mass matrix."""
+    # Create test data
     x = np.array([0.0, 1.0, 0.5])
     y = np.array([0.0, 0.0, 1.0])
     z = np.array([0.0, 0.0, 0.0])
-    uniform_areas = np.array([2.0, 2.0, 2.0])  # All same area
+    areas = np.array([1.0, 4.0, 0.25])
 
-    # Get eigenvalues with area weighting
+    # Get eigenvectors with area weighting
     evals_area, evecs_area = get_eigenvalues_and_eigenvectors(
         n_eigenvalues=2, x=x, y=y, z=z, distance_exponent=1.0,
-        areas=uniform_areas, area_weighting="area"
+        areas=areas, area_weighting="area"
     )
 
-    # Get eigenvalues with constant weighting
-    evals_const, evecs_const = get_eigenvalues_and_eigenvectors(
-        n_eigenvalues=2, x=x, y=y, z=z, distance_exponent=1.0,
-        areas=uniform_areas, area_weighting="constant"
-    )
-
-    # With uniform areas, eigenvalues should be scaled by the area value
-    area_value = uniform_areas[0]
-    expected_ratio = area_value  # sqrt(area * area) = area
-    np.testing.assert_allclose(evals_area / evals_const, expected_ratio, rtol=1e-12)
+    # Check that eigenvectors are normalized: v_i^T M v_i = 1
+    mass_matrix = np.diag(areas)
     
-    # Eigenvectors should have the same magnitudes
-    np.testing.assert_allclose(np.abs(evecs_area), np.abs(evecs_const), rtol=1e-12)
-
-
-def test_inverse_area_uniform_gives_inverse_scaling():
-    """Test that inverse area weighting with uniform areas scales by 1/area."""
-    # Create test data with uniform areas
-    x = np.array([0.0, 1.0, 0.5])
-    y = np.array([0.0, 0.0, 1.0])
-    z = np.array([0.0, 0.0, 0.0])
-    uniform_areas = np.array([4.0, 4.0, 4.0])  # All same area
-
-    # Get eigenvalues with inverse area weighting
-    evals_inv, _ = get_eigenvalues_and_eigenvectors(
-        n_eigenvalues=2, x=x, y=y, z=z, distance_exponent=1.0,
-        areas=uniform_areas, area_weighting="inverse"
-    )
-
-    # Get eigenvalues with constant weighting
-    evals_const, _ = get_eigenvalues_and_eigenvectors(
-        n_eigenvalues=2, x=x, y=y, z=z, distance_exponent=1.0,
-        areas=uniform_areas, area_weighting="constant"
-    )
-
-    # With uniform areas and inverse weighting, eigenvalues should be scaled by 1/area
-    area_value = uniform_areas[0]
-    expected_ratio = 1.0 / area_value
-    np.testing.assert_allclose(evals_inv / evals_const, expected_ratio, rtol=1e-12)
+    norm_0 = evecs_area[:, 0].T @ mass_matrix @ evecs_area[:, 0]
+    norm_1 = evecs_area[:, 1].T @ mass_matrix @ evecs_area[:, 1]
+    
+    # Should be approximately 1
+    np.testing.assert_allclose(norm_0, 1.0, rtol=1e-12)
+    np.testing.assert_allclose(norm_1, 1.0, rtol=1e-12)
