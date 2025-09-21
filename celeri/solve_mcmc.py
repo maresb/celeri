@@ -107,7 +107,7 @@ def _coupling_component(
     )
     n_eigs = eigenvectors.shape[1]
     # Use eigenvalue-based variance for proper Matérn GP prior
-    # Normalize so top eigenmode has std=10 (preserving original default)
+    # Normalize so top eigenmode has std=10
     eigenvalue_std = np.sqrt(eigenvalues)
     normalized_std = 10.0 * eigenvalue_std / eigenvalue_std[0]
     coefs = pm.Normal(f"coupling_coefs_{mesh}_{kind}", mu=0, sigma=normalized_std, shape=n_eigs)
