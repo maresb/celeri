@@ -162,7 +162,7 @@ def _elastic_component(
     n_eigs = eigenvectors.shape[1]
 
     # Use eigenvalue-based variance for proper Matérn GP prior
-    # Normalize so top eigenmode has unit std (preserving original default)
+    # Normalize so top eigenmode has std=1
     eigenvalue_std = np.sqrt(eigenvalues)
     normalized_std = eigenvalue_std / eigenvalue_std[0]
     raw = pm.Normal(f"elastic_eigen_raw_{mesh}_{kind}", sigma=normalized_std, shape=n_eigs)
