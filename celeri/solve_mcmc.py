@@ -48,7 +48,7 @@ def _get_eigen_modes(
     operators: Operators,
     out_idx: slice,
 ):
-    """Get the eigenmodes and station velocity operator for a mesh and slip type."""
+    """Get the eigenmodes, eigenvalues and station velocity operator for a mesh and slip type."""
     assert operators.eigen is not None
 
     if kind == "strike_slip":
@@ -64,7 +64,8 @@ def _get_eigen_modes(
     to_velocity = operators.eigen.eigen_to_velocities[mesh][
         :, start_idx : start_idx + n_eigs
     ]
-    return _clean_operator(eigenvectors), _clean_operator(to_velocity)
+    eigenvalues = operators.eigen.eigenvalues[mesh][start_idx : start_idx + n_eigs]
+    return _clean_operator(eigenvectors), _clean_operator(to_velocity), eigenvalues
 
 
 def _coupling_component(
@@ -97,7 +98,7 @@ def _coupling_component(
     kinematic = operator @ rotation
     pm.Deterministic(f"kinematic_{mesh}_{kind}", kinematic)
 
-    eigenvectors, _ = _get_eigen_modes(
+    eigenvectors, _, eigenvalues = _get_eigen_modes(
         model,
         mesh,
         kind,
@@ -105,7 +106,9 @@ def _coupling_component(
         out_idx=idx,
     )
     n_eigs = eigenvectors.shape[1]
-    coefs = pm.Normal(f"coupling_coefs_{mesh}_{kind}", mu=0, sigma=10, shape=n_eigs)
+    # Use eigenvalue-based variance for proper Matérn GP prior
+    eigenvalue_std = np.sqrt(eigenvalues)
+    coefs = pm.Normal(f"coupling_coefs_{mesh}_{kind}", mu=0, sigma=eigenvalue_std, shape=n_eigs)
 
     coupling_field = eigenvectors @ coefs
     coupling_field = _constrain_field(coupling_field, lower, upper)
@@ -147,7 +150,7 @@ def _elastic_component(
     scale = scale / len(operators.eigen.eigen_to_velocities)
     scale = 1 / np.sqrt(scale)
 
-    eigenvectors, to_velocity = _get_eigen_modes(
+    eigenvectors, to_velocity, eigenvalues = _get_eigen_modes(
         model,
         mesh,
         kind,
@@ -156,7 +159,9 @@ def _elastic_component(
     )
     n_eigs = eigenvectors.shape[1]
 
-    raw = pm.Normal(f"elastic_eigen_raw_{mesh}_{kind}", shape=n_eigs)
+    # Use eigenvalue-based variance for proper Matérn GP prior
+    eigenvalue_std = np.sqrt(eigenvalues)
+    raw = pm.Normal(f"elastic_eigen_raw_{mesh}_{kind}", sigma=eigenvalue_std, shape=n_eigs)
     param = pm.Deterministic(f"elastic_eigen_{mesh}_{kind}", scale * raw)
     elastic = _constrain_field(eigenvectors @ param, lower, upper)
     pm.Deterministic(f"elastic_{mesh}_{kind}", elastic)
