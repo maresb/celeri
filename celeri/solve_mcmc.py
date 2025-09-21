@@ -106,11 +106,15 @@ def _coupling_component(
         out_idx=idx,
     )
     n_eigs = eigenvectors.shape[1]
-    # Use eigenvalue-based variance for proper Matérn GP prior
+
+    # Use eigenvalue-based variance for Matérn GP prior
     # Normalize so top eigenmode has std=10
     eigenvalue_std = np.sqrt(eigenvalues)
-    normalized_std = 10.0 * eigenvalue_std / eigenvalue_std[0]
-    coefs = pm.Normal(f"coupling_coefs_{mesh}_{kind}", mu=0, sigma=normalized_std, shape=n_eigs)
+    top_std = eigenvalue_std[0] if len(eigenvalue_std) > 0 else np.nan
+    normalized_std = 10.0 * eigenvalue_std / top_std
+    coefs = pm.Normal(
+        f"coupling_coefs_{mesh}_{kind}", mu=0, sigma=normalized_std, shape=n_eigs
+    )
 
     coupling_field = eigenvectors @ coefs
     coupling_field = _constrain_field(coupling_field, lower, upper)
@@ -161,11 +165,14 @@ def _elastic_component(
     )
     n_eigs = eigenvectors.shape[1]
 
-    # Use eigenvalue-based variance for proper Matérn GP prior
+    # Use eigenvalue-based variance for Matérn GP prior
     # Normalize so top eigenmode has std=1
     eigenvalue_std = np.sqrt(eigenvalues)
-    normalized_std = eigenvalue_std / eigenvalue_std[0]
-    raw = pm.Normal(f"elastic_eigen_raw_{mesh}_{kind}", sigma=normalized_std, shape=n_eigs)
+    top_std = eigenvalue_std[0] if len(eigenvalue_std) > 0 else np.nan
+    normalized_std = 1.0 * eigenvalue_std / top_std
+    raw = pm.Normal(
+        f"elastic_eigen_raw_{mesh}_{kind}", sigma=normalized_std, shape=n_eigs
+    )
     param = pm.Deterministic(f"elastic_eigen_{mesh}_{kind}", scale * raw)
     elastic = _constrain_field(eigenvectors @ param, lower, upper)
     pm.Deterministic(f"elastic_{mesh}_{kind}", elastic)
