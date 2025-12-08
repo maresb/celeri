@@ -130,7 +130,20 @@ def plot_annealing_convergence(trace):
 def main():
     """Run annealing optimization and create visualizations."""
     # Load configuration and build model
-    config = get_config("data/config/japan_config.json")
+    # Path is relative to workspace root
+    from pathlib import Path
+    
+    # Get workspace root (parent of notebooks directory)
+    workspace_root = Path(__file__).parent.parent
+    config_path = workspace_root / "data" / "config" / "japan_config.json"
+    
+    if not config_path.exists():
+        raise FileNotFoundError(
+            f"Config file not found: {config_path}\n"
+            "Please ensure you're running from the workspace root or that the data files exist."
+        )
+    
+    config = get_config(str(config_path))
     model = Model.from_config(config)
 
     # Configure solver settings
@@ -163,17 +176,23 @@ def main():
     print(f"Final objective: {trace.objective_norm2[-1]:.6e}")
     print(f"Final out-of-bounds: {trace.out_of_bounds[-1]}")
 
+    # Create output directory in workspace root
+    output_dir = workspace_root / "notebooks" / "annealing_output"
+    output_dir.mkdir(exist_ok=True)
+    
     # Plot convergence metrics
     print("\nPlotting convergence metrics...")
     plot_annealing_convergence(trace)
-    plt.savefig("annealing_convergence.png", dpi=150, bbox_inches="tight")
-    print("Saved: annealing_convergence.png")
+    output_file = output_dir / "annealing_convergence.png"
+    plt.savefig(str(output_file), dpi=150, bbox_inches="tight")
+    print(f"Saved: {output_file}")
 
     # Plot final TDE slip rates
     print("\nPlotting final TDE slip rates...")
     plot_tde_slip_rates(trace.model, estimation, title="Final TDE Slip (strike-slip)")
-    plt.savefig("annealing_final_slip.png", dpi=150, bbox_inches="tight")
-    print("Saved: annealing_final_slip.png")
+    output_file = output_dir / "annealing_final_slip.png"
+    plt.savefig(str(output_file), dpi=150, bbox_inches="tight")
+    print(f"Saved: {output_file}")
 
     # Plot a few key iterations to show evolution
     print("\nPlotting evolution at key iterations...")
@@ -255,8 +274,9 @@ def main():
         )
 
     plt.tight_layout()
-    plt.savefig("annealing_evolution.png", dpi=150, bbox_inches="tight")
-    print("Saved: annealing_evolution.png")
+    output_file = output_dir / "annealing_evolution.png"
+    plt.savefig(str(output_file), dpi=150, bbox_inches="tight")
+    print(f"Saved: {output_file}")
 
     print("\nDone!")
 
