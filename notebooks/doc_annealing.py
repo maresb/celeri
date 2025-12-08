@@ -19,11 +19,10 @@ from celeri.optimize import MinimizerTrace
 # %%
 # Configure matplotlib for high-quality figures
 plt.rcParams["figure.dpi"] = 150
-plt.rcParams["figure.format"] = "retina"
 
 # %%
 # Load the Japan model
-config_file = "../data/config/japan_config.json"
+config_file = "data/config/japan_config.json"
 model = celeri.build_model(config_file)
 operators = celeri.build_operators(model, eigen=True, tde=True)
 
@@ -60,7 +59,8 @@ in_bounds_iterations = [
     i for i, oob in enumerate(trace.out_of_bounds) if oob == 0
 ]
 if in_bounds_iterations:
-    print(f"Annealing started at iteration: {in_bounds_iterations[0]}")
+    # Note: in_bounds_iterations uses 0-based indexing, but we display as iteration number
+    print(f"Annealing started at iteration: {in_bounds_iterations[0] + 1}")
     print(f"Annealing iterations: {len(in_bounds_iterations)}")
 
 # %%
