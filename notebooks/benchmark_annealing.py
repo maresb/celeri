@@ -47,7 +47,7 @@ SMALL_CONFIG = PROJECT_ROOT / "tests" / "test_japan_config.json"
 FULL_CONFIG = PROJECT_ROOT / "data" / "config" / "japan_config.json"
 
 # Set to False to run the full-resolution Japan example.
-USE_SMALL_EXAMPLE = True
+USE_SMALL_EXAMPLE = False
 CONFIG_PATH = SMALL_CONFIG if USE_SMALL_EXAMPLE else FULL_CONFIG
 
 # Annealing looseness values in mm/yr.
