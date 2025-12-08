@@ -40,8 +40,6 @@ estimation = celeri.solve_sqp2(
     model,
     operators=operators,
     verbose=True,
-    velocity_upper=110.0,
-    velocity_lower=-110.0,
     solve_kwargs=solve_kwargs,
     objective="qr_sum_of_squares",
     max_iter=100,
@@ -147,19 +145,21 @@ def plot_tde_slip_evolution(
 
     meshes = trace.model.meshes
     segment = trace.model.segment
-    lon_range = trace.model.lon_range
-    lat_range = trace.model.lat_range
+    lon_range = trace.model.config.lon_range
+    lat_range = trace.model.config.lat_range
 
     for idx, iter_num in enumerate(iterations_to_plot):
         ax = axes[idx]
-        
+
         # Get TDE slip rates for this iteration
         state_vector = trace.params[iter_num]
         iter_estimation = estimation_from_state_vector(
             state_vector, trace.model, trace.minimizer.operators
         )
         tde_slip_rates = iter_estimation.tde_strike_slip_rates
-        
+        if tde_slip_rates is None:
+            raise ValueError(f"TDE slip rates are None for iteration {iter_num}")
+
         # Plot fault segments
         for i in range(len(segment)):
             color = "k" if segment.dip.iloc[i] == 90.0 else "r"
@@ -178,12 +178,12 @@ def plot_tde_slip_evolution(
 
         xy = np.c_[x_coords, y_coords]
         verts = xy[vertex_array]
-        
+
         import matplotlib.collections
         pc = matplotlib.collections.PolyCollection(
             verts, edgecolor="none", cmap="rainbow"
         )
-        
+
         slip_values = tde_slip_rates[mesh_idx]
         pc.set_array(slip_values)
         pc.set_clim([-10, 10])  # Fixed range for comparison
@@ -230,11 +230,11 @@ def create_interactive_slider(trace: MinimizerTrace, mesh_idx: int = 0):
 
     def plot_iteration(n: int):
         fig, ax = plt.subplots(figsize=(12, 10))
-        
+
         meshes = trace.model.meshes
         segment = trace.model.segment
-        lon_range = trace.model.lon_range
-        lat_range = trace.model.lat_range
+        lon_range = trace.model.config.lon_range
+        lat_range = trace.model.config.lat_range
 
         # Plot fault segments
         for i in range(len(segment)):
@@ -252,6 +252,8 @@ def create_interactive_slider(trace: MinimizerTrace, mesh_idx: int = 0):
             state_vector, trace.model, trace.minimizer.operators
         )
         tde_slip_rates = iter_estimation.tde_strike_slip_rates
+        if tde_slip_rates is None:
+            raise ValueError(f"TDE slip rates are None for iteration {n}")
 
         # Plot mesh
         mesh = meshes[mesh_idx]
@@ -261,12 +263,12 @@ def create_interactive_slider(trace: MinimizerTrace, mesh_idx: int = 0):
 
         xy = np.c_[x_coords, y_coords]
         verts = xy[vertex_array]
-        
+
         import matplotlib.collections
         pc = matplotlib.collections.PolyCollection(
             verts, edgecolor="none", cmap="rainbow"
         )
-        
+
         slip_values = tde_slip_rates[mesh_idx]
         pc.set_array(slip_values)
         pc.set_clim([-10, 10])
@@ -284,7 +286,7 @@ def create_interactive_slider(trace: MinimizerTrace, mesh_idx: int = 0):
             f"Iteration {n} ({phase})\n"
             f"Out-of-bounds: {oob}, Objective: {obj:.6e}"
         )
-        
+
         plt.tight_layout()
         plt.show()
 
