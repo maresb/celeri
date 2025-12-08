@@ -144,6 +144,7 @@ def plot_tde_component(
     component: str = "strike",
     clim: tuple[float, float] | None = None,
     title: str = "TDE strike-slip (mm/yr)",
+    plot_zero_contour: bool = True,
 ) -> None:
     """Plot strike- or dip-slip rates on all meshes."""
     if component not in {"strike", "dip"}:
@@ -162,6 +163,15 @@ def plot_tde_component(
     vmin, vmax = clim if clim is not None else (stacked.min(), stacked.max())
 
     fig, ax = plt.subplots(figsize=(10, 8))
+    pc: PolyCollection | None = None
+
+    # Collect global arrays for zero-contour across meshes
+    all_xy: list[np.ndarray] = []
+    all_tris: list[np.ndarray] = []
+    all_vals_faces: list[np.ndarray] = []
+    all_vals_nodes: list[np.ndarray] = []
+    node_offset = 0
+
     for idx in mesh_indices:
         mesh = estimation.model.meshes[idx]
         pc = _mesh_poly_collection(mesh, values_dict[idx], vmin=vmin, vmax=vmax)
@@ -177,11 +187,47 @@ def plot_tde_component(
             linewidth=0.7,
         )
 
+        # Accumulate for zero-contour
+        xy = mesh.points[:, :2]
+        tris = np.asarray(mesh.verts) + node_offset
+        all_xy.append(xy)
+        all_tris.append(tris)
+        all_vals_faces.append(values_dict[idx])
+
+        # Convert triangle-centered values to node-centered by simple averaging.
+        node_vals = np.zeros(len(xy))
+        node_counts = np.zeros(len(xy))
+        for tri, val in zip(mesh.verts, values_dict[idx]):
+            node_vals[tri] += val
+            node_counts[tri] += 1
+        node_counts = np.maximum(node_counts, 1)  # avoid division by zero
+        node_vals /= node_counts
+        all_vals_nodes.append(node_vals)
+        node_offset += xy.shape[0]
+
     ax.set_title(title)
     ax.set_xlabel("Longitude")
     ax.set_ylabel("Latitude")
     ax.set_aspect("equal", adjustable="box")
-    plt.colorbar(pc, ax=ax, label="Slip (mm/yr)")
+    if pc is not None:
+        plt.colorbar(pc, ax=ax, label="Slip (mm/yr)")
+
+    if plot_zero_contour and all_xy:
+        xy_stack = np.vstack(all_xy)
+        tri_stack = np.vstack(all_tris)
+        val_stack = np.concatenate(all_vals_nodes)
+        ax.tricontour(
+            xy_stack[:, 0],
+            xy_stack[:, 1],
+            tri_stack,
+            val_stack,
+            levels=[0.0],
+            colors="black",
+            linewidths=1.2,
+            linestyles="--",
+            zorder=3,
+        )
+
     plt.show()
 
 
