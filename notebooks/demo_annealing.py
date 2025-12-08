@@ -35,7 +35,11 @@ logger.disable("celeri")
 # Build the model and operators from the Japan configuration file.
 
 # %%
-config_file = "../data/config/japan_config.json"
+from pathlib import Path
+
+# Get the directory of this script
+script_dir = Path(__file__).parent.resolve()
+config_file = script_dir / "../data/config/japan_config.json"
 
 print("Building model...")
 model = celeri.build_model(config_file)
@@ -127,7 +131,9 @@ ax.set_title(f"Iteration Time (total: {trace.total_time:.1f}s)")
 ax.grid(True, alpha=0.3)
 
 plt.tight_layout()
-plt.show()
+plt.savefig("convergence.png", dpi=150)
+plt.close()
+print("Saved convergence.png")
 
 # %% [markdown]
 # ## Plot estimation summary
@@ -136,6 +142,9 @@ plt.show()
 
 # %%
 celeri.plot_estimation_summary(model, estimation)
+plt.savefig("estimation_summary.png", dpi=150)
+plt.close()
+print("Saved estimation_summary.png")
 
 # %% [markdown]
 # ## Plot TDE slip rates on meshes
@@ -192,14 +201,22 @@ def plot_tde_slip_rates(estimation, component="strike_slip"):
         plt.colorbar(pc, ax=ax, shrink=0.7, label="mm/yr")
 
     plt.tight_layout()
-    plt.show()
+    return fig
 
 
 # %%
-plot_tde_slip_rates(estimation, "strike_slip")
+fig = plot_tde_slip_rates(estimation, "strike_slip")
+if fig:
+    fig.savefig("strike_slip_rates.png", dpi=150)
+    plt.close(fig)
+    print("Saved strike_slip_rates.png")
 
 # %%
-plot_tde_slip_rates(estimation, "dip_slip")
+fig = plot_tde_slip_rates(estimation, "dip_slip")
+if fig:
+    fig.savefig("dip_slip_rates.png", dpi=150)
+    plt.close(fig)
+    print("Saved dip_slip_rates.png")
 
 # %% [markdown]
 # ## Plot coupling ratios
@@ -212,6 +229,8 @@ plot_tde_slip_rates(estimation, "dip_slip")
 def plot_coupling_ratios(estimation, component="strike_slip"):
     """Plot coupling ratios for all meshes."""
     meshes = estimation.model.meshes
+    # Only segment meshes have coupling data
+    segment_mesh_indices = estimation.model.segment_mesh_indices
 
     if component == "strike_slip":
         coupling = estimation.tde_strike_slip_rates_coupling_smooth
@@ -227,10 +246,14 @@ def plot_coupling_ratios(estimation, component="strike_slip"):
     fig, ax = plt.subplots(figsize=(12, 8))
 
     pc = None
-    for mesh_idx, mesh in enumerate(meshes):
+    for mesh_idx in segment_mesh_indices:
+        mesh = meshes[mesh_idx]
         # Clip coupling to [0, 1] for visualization
         values = np.clip(coupling[mesh_idx], 0, 1)
-        pc = plot_mesh(mesh, fill_value=values, ax=ax, vmin=0, vmax=1, cmap="viridis")
+        # Use center=0.5 for coupling ratios (0 to 1 scale)
+        pc = plot_mesh(
+            mesh, fill_value=values, ax=ax, vmin=0, vmax=1, cmap="viridis", center=0.5
+        )
 
     # Plot segments
     segment = estimation.model.segment
@@ -254,14 +277,22 @@ def plot_coupling_ratios(estimation, component="strike_slip"):
         plt.colorbar(pc, ax=ax, shrink=0.7, label="Coupling")
 
     plt.tight_layout()
-    plt.show()
+    return fig
 
 
 # %%
-plot_coupling_ratios(estimation, "strike_slip")
+fig = plot_coupling_ratios(estimation, "strike_slip")
+if fig:
+    fig.savefig("strike_slip_coupling.png", dpi=150)
+    plt.close(fig)
+    print("Saved strike_slip_coupling.png")
 
 # %%
-plot_coupling_ratios(estimation, "dip_slip")
+fig = plot_coupling_ratios(estimation, "dip_slip")
+if fig:
+    fig.savefig("dip_slip_coupling.png", dpi=150)
+    plt.close(fig)
+    print("Saved dip_slip_coupling.png")
 
 # %% [markdown]
 # ## Plot evolution of slip rates during optimization
@@ -392,12 +423,16 @@ def plot_slip_rate_evolution(trace, mesh_idx=0, n_points=50):
     ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
-    plt.show()
+    return fig
 
 
 # %%
 # Plot evolution for first mesh
-plot_slip_rate_evolution(trace, mesh_idx=0)
+fig = plot_slip_rate_evolution(trace, mesh_idx=0)
+if fig:
+    fig.savefig("slip_rate_evolution.png", dpi=150)
+    plt.close(fig)
+    print("Saved slip_rate_evolution.png")
 
 # %% [markdown]
 # ## Plot out-of-bounds evolution by mesh
@@ -421,7 +456,9 @@ ax.set_title("Out-of-Bounds Evolution by Mesh")
 ax.legend()
 ax.grid(True, alpha=0.3)
 plt.tight_layout()
-plt.show()
+plt.savefig("oob_by_mesh.png", dpi=150)
+plt.close()
+print("Saved oob_by_mesh.png")
 
 # %% [markdown]
 # ## Compare with and without annealing
@@ -473,7 +510,9 @@ ax.legend()
 ax.grid(True, alpha=0.3)
 
 plt.tight_layout()
-plt.show()
+plt.savefig("comparison.png", dpi=150)
+plt.close()
+print("Saved comparison.png")
 
 # %% [markdown]
 # ## Summary
@@ -488,3 +527,5 @@ plt.show()
 # The annealing approach helps find solutions that satisfy the non-convex coupling
 # constraints while minimizing the data misfit. By iteratively tightening and
 # loosening bounds, the solver can explore different regions of the solution space.
+
+print("\n=== Demo complete! ===")
