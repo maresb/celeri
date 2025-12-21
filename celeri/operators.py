@@ -2133,7 +2133,9 @@ def get_qp_slip_rate_inequality_operator_and_data_vector(
     return slip_rate_bound_matrix, slip_rate_bound_data_vector
 
 
-def get_eigenvalues_and_eigenvectors(n_eigenvalues, x, y, z, distance_exponent):
+def get_eigenvalues_and_eigenvectors(
+    n_eigenvalues, x, y, z, distance_exponent, areas=None, area_weighting="area"
+):
     n_tde = x.size
 
     # Calculate Cartesian distances between triangle centroids
@@ -2150,11 +2152,42 @@ def get_eigenvalues_and_eigenvectors(n_eigenvalues, x, y, z, distance_exponent):
     # Calculate correlation matrix
     correlation_matrix = np.exp(-(distance_matrix**distance_exponent))
 
-    # https://stackoverflow.com/questions/12167654/fastest-way-to-compute-k-largest-eigenvalues-and-corresponding-eigenvectors-with
-    eigenvalues, eigenvectors = scipy.linalg.eigh(
-        correlation_matrix,
-        subset_by_index=[n_tde - n_eigenvalues, n_tde - 1],
-    )
+    # Set up mass matrix for proper eigenmode computation
+    if areas is not None and area_weighting != "constant":
+        # Create mass matrix based on the weighting scheme
+        if area_weighting == "area":
+            # Standard mass matrix with areas (proper L2 inner product)
+            mass_weights = areas.copy()
+        elif area_weighting == "inverse":
+            # Inverse area weighting (for recovering constant-like behavior)
+            mass_weights = np.zeros_like(areas)
+            nonzero_mask = areas > 0
+            mass_weights[nonzero_mask] = 1.0 / areas[nonzero_mask]
+        else:
+            # Default to area weighting for unknown schemes
+            mass_weights = areas.copy()
+
+        # Handle edge case: zero areas should be given a small positive value
+        # to maintain positive definiteness of the mass matrix
+        min_positive_weight = np.min(mass_weights[mass_weights > 0]) if np.any(mass_weights > 0) else 1.0
+        epsilon = 1e-8 * min_positive_weight  # Use a larger epsilon for numerical stability
+        mass_weights = np.where(mass_weights <= 0, epsilon, mass_weights)
+        
+        # Create mass matrix (diagonal matrix with mass weights)
+        mass_matrix = np.diag(mass_weights)
+
+        # Solve generalized eigenvalue problem: K v = λ M v
+        # This gives proper eigenmodes with respect to the L2 inner product weighted by areas
+        eigenvalues, eigenvectors = scipy.linalg.eigh(
+            correlation_matrix, mass_matrix,
+            subset_by_index=[n_tde - n_eigenvalues, n_tde - 1],
+        )
+    else:
+        # Standard eigenvalue problem for constant weighting (backward compatibility)
+        eigenvalues, eigenvectors = scipy.linalg.eigh(
+            correlation_matrix,
+            subset_by_index=[n_tde - n_eigenvalues, n_tde - 1],
+        )
     eigenvalues = np.real(eigenvalues)
     eigenvectors = np.real(eigenvectors)
     eigenvectors[np.abs(eigenvectors) < 1e-6] = 0.0
@@ -2176,6 +2209,8 @@ def _store_eigenvectors_to_tde_slip(model: Model, operators: _OperatorBuilder):
             meshes[i].y_centroid,
             meshes[i].z_centroid,
             distance_exponent=1.0,  # Make this something set in mesh_parameters.json
+            areas=meshes[i].areas,
+            area_weighting=meshes[i].config.eigenmode_area_weighting,
         )
 
         # Create eigenvectors to TDE slip matrix

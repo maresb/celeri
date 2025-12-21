@@ -116,6 +116,11 @@ class MeshConfig(BaseModel):
     # `side_slip_rate_weight` if the TDE eigenmodes are used.
     eigenmode_slip_rate_constraint_weight: float = 1.0
 
+    # Additional area weighting function for eigenmode computation.
+    # If None, uses area weighting. Set to "inverse" to weight by inverse area
+    # (recovering constant weighting), or "constant" for traditional constant weighting.
+    eigenmode_area_weighting: Literal["area", "inverse", "constant"] | None = "area"
+
     # Filename for fixed slip rates, not currently used
     a_priori_slip_filename: Path | None = None
 
