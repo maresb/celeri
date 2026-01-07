@@ -5,7 +5,6 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pyproj
 from loguru import logger
@@ -563,6 +562,9 @@ def diagnose_matrix(mat):
     Prints:
     - The index of the first rank deficient column and its rank.
     """
+    # NOTE: matplotlib is intentionally imported lazily to keep CLI startup fast.
+    import matplotlib.pyplot as plt
+
     """
     Example call for QP solve operator
     diagnose_matrix(operators.eigen * np.sqrt(weighting_vector_eigen[:, None]))

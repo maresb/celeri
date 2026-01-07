@@ -10,7 +10,6 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any
 
-import cvxopt
 import numpy as np
 import pandas as pd
 import scipy
@@ -827,6 +826,9 @@ def lsqlin_qp(
     __date__ = "22.11.2013"
     __license__ = "MIT"
     """
+    # NOTE: cvxopt is intentionally imported lazily to keep CLI startup fast for
+    # solve modes that never use the QP solver.
+    import cvxopt
 
     # Helper functions
     def scipy_sparse_to_spmatrix(A):

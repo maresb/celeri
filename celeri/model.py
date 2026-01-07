@@ -2,7 +2,6 @@ import copy
 from dataclasses import dataclass
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from loguru import logger
@@ -593,6 +592,8 @@ def assign_block_labels(segment, station, block, mogi, sar):
             logger.warning(f"{vs[:, 1] = }")
 
             # Debug figure
+            import matplotlib.pyplot as plt
+
             plt.figure()
             plt.title(f"polygon {i = }")
             for j in range(len(segment)):
@@ -628,6 +629,8 @@ def assign_block_labels(segment, station, block, mogi, sar):
             logger.warning(f"{vs[:, 1] = }")
 
             # Debug figure
+            import matplotlib.pyplot as plt
+
             plt.figure()
             plt.title(f"polygon {i = }")
             for j in range(len(segment)):
