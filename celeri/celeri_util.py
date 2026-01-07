@@ -5,18 +5,36 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import matplotlib.pyplot as plt
 import numpy as np
-import pyproj
 from loguru import logger
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
-from scipy.spatial.distance import cdist
 
 if TYPE_CHECKING:
     from celeri.config import Config
     from celeri.solve import Estimation
+
+
+def _get_pyproj():
+    """Lazy import for pyproj to reduce startup time."""
+    import pyproj
+
+    return pyproj
+
+
+def _get_cdist():
+    """Lazy import for scipy.spatial.distance.cdist to reduce startup time."""
+    from scipy.spatial.distance import cdist
+
+    return cdist
+
+
+def _get_plt():
+    """Lazy import for matplotlib.pyplot to reduce startup time."""
+    import matplotlib.pyplot as plt
+
+    return plt
 
 
 def sph2cart(lon, lat, radius):
@@ -272,6 +290,7 @@ def get_segment_oblique_projection(lon1, lat1, lon2, lat2, skew=True):
     )
     if not skew:
         projection_string += " +no_rot"
+    pyproj = _get_pyproj()
     projection = pyproj.Proj(pyproj.CRS.from_proj4(projection_string))
     return projection
 
@@ -308,6 +327,7 @@ def get_transverse_projection(lon0, lat0):
         + " "
         + "+ellps=WGS84"
     )
+    pyproj = _get_pyproj()
     projection = pyproj.Proj(pyproj.CRS.from_proj4(projection_string))
     return projection
 
@@ -425,6 +445,7 @@ def align_velocities(df_1, df_2, distance_threshold):
         df_2["block_label"] = 0
 
     # Find approximate distances between all station pairs between data sets
+    cdist = _get_cdist()
     station_to_station_distances = cdist(
         np.array([df_1.lon, df_1.lat]).T, np.array([df_2.lon, df_2.lat]).T
     )
@@ -567,6 +588,7 @@ def diagnose_matrix(mat):
     Example call for QP solve operator
     diagnose_matrix(operators.eigen * np.sqrt(weighting_vector_eigen[:, None]))
     """
+    plt = _get_plt()
     plt.figure(figsize=(20, 4))
     plt.imshow(np.log10(np.abs(mat)), aspect="auto")
     plt.show()

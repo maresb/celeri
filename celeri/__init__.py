@@ -1,3 +1,22 @@
+"""Celeri - A crustal block modeling package.
+
+This module uses lazy imports for heavy dependencies to reduce startup time.
+The following modules are loaded lazily when their exports are first accessed:
+- celeri.optimize (cvxpy)
+- celeri.optimize_sqp (cvxpy)  
+- celeri.solve_mcmc (pymc, arviz)
+- celeri.plot (matplotlib, cartopy)
+
+Essential modules for CLI startup are loaded eagerly:
+- celeri.cli, celeri.config, celeri.model, celeri.solve, celeri.output
+"""
+
+from __future__ import annotations
+
+import importlib
+from typing import TYPE_CHECKING
+
+# Essential imports for CLI startup - these are loaded eagerly
 from celeri.celeri_util import (
     align_velocities,
     diagnose_matrix,
@@ -47,34 +66,7 @@ from celeri.operators import (
     get_tde_to_velocities_single_mesh,
     get_weighting_vector_single_mesh_for_col_norms,
 )
-from celeri.optimize import solve_sqp2
-from celeri.optimize_sqp import (
-    plot_iterative_convergence,
-    solve_sqp,
-)
 from celeri.output import write_output
-from celeri.plot import (
-    get_default_plotting_options,
-    plot_coastlines,
-    plot_common_elements,
-    plot_coupling,
-    plot_coupling_evolution,
-    plot_estimation_summary,
-    plot_fault_geometry,
-    plot_input_summary,
-    plot_land,
-    plot_matrix_abs_log,
-    plot_mesh,
-    plot_mesh_mode,
-    plot_residuals,
-    plot_rotation_components,
-    plot_segment_displacements,
-    plot_segment_rates,
-    plot_strain_rate_components_for_block,
-    plot_tde_boundary_condition_labels,
-    plot_vel_arrows_elements,
-    plot_vels,
-)
 from celeri.solve import (
     Estimation,
     assemble_and_solve_dense,
@@ -83,7 +75,6 @@ from celeri.solve import (
     build_estimation,
     lsqlin_qp,
 )
-from celeri.solve_mcmc import solve_mcmc
 from celeri.spatial import (
     get_okada_displacements,
     get_shared_sides,
@@ -91,12 +82,93 @@ from celeri.spatial import (
     get_tri_displacements,
 )
 
+# Type checking imports (no runtime cost)
+if TYPE_CHECKING:
+    from celeri.optimize import solve_sqp2
+    from celeri.optimize_sqp import plot_iterative_convergence, solve_sqp
+    from celeri.plot import (
+        get_default_plotting_options,
+        plot_coastlines,
+        plot_common_elements,
+        plot_coupling,
+        plot_coupling_evolution,
+        plot_estimation_summary,
+        plot_fault_geometry,
+        plot_input_summary,
+        plot_land,
+        plot_matrix_abs_log,
+        plot_mesh,
+        plot_mesh_mode,
+        plot_residuals,
+        plot_rotation_components,
+        plot_segment_displacements,
+        plot_segment_rates,
+        plot_strain_rate_components_for_block,
+        plot_tde_boundary_condition_labels,
+        plot_vel_arrows_elements,
+        plot_vels,
+    )
+    from celeri.solve_mcmc import solve_mcmc
+
 try:
     from importlib.metadata import version
 
     __version__ = version("celeri")
 except Exception:
     __version__ = "unknown"
+
+# Lazy import mappings: attribute_name -> (module_path, attribute_name_in_module)
+_LAZY_IMPORTS: dict[str, tuple[str, str]] = {
+    # From celeri.optimize
+    "solve_sqp2": ("celeri.optimize", "solve_sqp2"),
+    # From celeri.optimize_sqp
+    "solve_sqp": ("celeri.optimize_sqp", "solve_sqp"),
+    "plot_iterative_convergence": ("celeri.optimize_sqp", "plot_iterative_convergence"),
+    # From celeri.solve_mcmc
+    "solve_mcmc": ("celeri.solve_mcmc", "solve_mcmc"),
+    # From celeri.plot
+    "get_default_plotting_options": ("celeri.plot", "get_default_plotting_options"),
+    "plot_coastlines": ("celeri.plot", "plot_coastlines"),
+    "plot_common_elements": ("celeri.plot", "plot_common_elements"),
+    "plot_coupling": ("celeri.plot", "plot_coupling"),
+    "plot_coupling_evolution": ("celeri.plot", "plot_coupling_evolution"),
+    "plot_estimation_summary": ("celeri.plot", "plot_estimation_summary"),
+    "plot_fault_geometry": ("celeri.plot", "plot_fault_geometry"),
+    "plot_input_summary": ("celeri.plot", "plot_input_summary"),
+    "plot_land": ("celeri.plot", "plot_land"),
+    "plot_matrix_abs_log": ("celeri.plot", "plot_matrix_abs_log"),
+    "plot_mesh": ("celeri.plot", "plot_mesh"),
+    "plot_mesh_mode": ("celeri.plot", "plot_mesh_mode"),
+    "plot_residuals": ("celeri.plot", "plot_residuals"),
+    "plot_rotation_components": ("celeri.plot", "plot_rotation_components"),
+    "plot_segment_displacements": ("celeri.plot", "plot_segment_displacements"),
+    "plot_segment_rates": ("celeri.plot", "plot_segment_rates"),
+    "plot_strain_rate_components_for_block": (
+        "celeri.plot",
+        "plot_strain_rate_components_for_block",
+    ),
+    "plot_tde_boundary_condition_labels": (
+        "celeri.plot",
+        "plot_tde_boundary_condition_labels",
+    ),
+    "plot_vel_arrows_elements": ("celeri.plot", "plot_vel_arrows_elements"),
+    "plot_vels": ("celeri.plot", "plot_vels"),
+}
+
+
+def __getattr__(name: str):
+    """Lazily import heavy modules when their exports are first accessed."""
+    if name in _LAZY_IMPORTS:
+        module_path, attr_name = _LAZY_IMPORTS[name]
+        module = importlib.import_module(module_path)
+        return getattr(module, attr_name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__():
+    """List all available attributes including lazy imports."""
+    return list(__all__)
+
 
 __all__ = [
     "Config",
