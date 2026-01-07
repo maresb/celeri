@@ -2,12 +2,9 @@ import copy
 from dataclasses import dataclass
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from loguru import logger
-from matplotlib import path
-from scipy.spatial.distance import cdist
 
 from celeri import celeri_closure
 from celeri.celeri_util import sph2cart
@@ -433,6 +430,8 @@ def segment_centroids(segment):
 
 def snap_segments(segment, meshes):
     """Replace segments tracing meshes with the actual top edges of those meshes."""
+    from scipy.spatial.distance import cdist
+
     # For each mesh, find associated segments
     cut_segment_idx = []
     all_edge_segment = make_default_segment(0)
@@ -524,6 +523,8 @@ def snap_segments(segment, meshes):
 
 def inpolygon(xq, yq, xv, yv):
     """Check if points (xq, yq) are inside polygon (xv, yv) using matplotlib."""
+    from matplotlib import path
+
     shape = xq.shape
     xq = xq.reshape(-1)
     yq = yq.reshape(-1)
@@ -538,6 +539,8 @@ def assign_block_labels(segment, station, block, mogi, sar):
     """Ben Thompson's implementation of the half edge approach to the
     block labeling problem and east/west assignment.
     """
+    import matplotlib.pyplot as plt
+
     # segment = split_segments_crossing_meridian(segment)
     segment = segment.copy(deep=True)
     station = station.copy(deep=True)
@@ -697,6 +700,8 @@ def assign_mesh_segment_labels(
         east_labels: block labels on eastern side
         west_labels: block labels on western side
     """
+    from scipy.spatial.distance import cdist
+
     # Find subset of segments that are replaced by this mesh
     seg_replace_idx = np.where(
         (model.segment.mesh_flag != 0) & (model.segment.mesh_file_index == mesh_idx)

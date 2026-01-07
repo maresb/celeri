@@ -5,14 +5,10 @@ import warnings
 from collections import namedtuple
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import Any, cast
+from typing import Any, TYPE_CHECKING, cast
 
-import cvxopt
-import cvxpy as cp
-import matplotlib.pyplot as plt
 import numpy as np
 from loguru import logger
-from scipy import linalg, sparse
 
 from celeri.config import Sqp2Objective
 from celeri.mesh import ScalarBound
@@ -26,6 +22,11 @@ from celeri.plot import (
     plot_estimation_summary,
 )
 from celeri.solve import Estimation, build_estimation
+
+if TYPE_CHECKING:
+    import cvxopt
+    import cvxpy as cp
+    import matplotlib.pyplot as plt
 
 
 @dataclass
@@ -46,6 +47,8 @@ class SlipRateItem:
 
     def kinematic_numpy(self, *, smooth: bool) -> np.ndarray | None:
         """Return kinematic slip rates as a numpy array."""
+        import cvxpy as cp
+
         if smooth:
             kinematic = self.kinematic_smooth
         else:
@@ -58,6 +61,8 @@ class SlipRateItem:
 
     def elastic_numpy(self) -> np.ndarray:
         """Return elastic slip rates as a numpy array."""
+        import cvxpy as cp
+
         elastic = self.elastic
 
         if isinstance(elastic, cp.Expression):
@@ -246,6 +251,8 @@ class SlipRateLimitItem:
         )
 
     def update_constraints(self):
+        import cvxpy as cp
+
         if self.coupling_bounds.lower is None and self.coupling_bounds.upper is None:
             # No coupling limits defined, so no constraints to update
             self.constraints_matrix_kinematic = None
@@ -368,6 +375,8 @@ class SlipRateLimitItem:
         self.constraints_vector.value = const
 
     def build_constraints(self, kinematic, elastic) -> list[cp.Constraint]:
+        import cvxpy as cp
+
         constraints = []
 
         if (
@@ -401,6 +410,8 @@ class SlipRateLimitItem:
         Returns:
             matplotlib Figure object
         """
+        import matplotlib.pyplot as plt
+
         self.update_constraints()
 
         assert self.constraints_vector is not None
@@ -590,6 +601,8 @@ class Minimizer:
     smooth_kinematic: bool = True
 
     def plot_coupling(self):
+        import matplotlib.pyplot as plt
+
         n_plots = len(self.model.segment_mesh_indices)
         fig, axes = plt.subplots(n_plots, 4, figsize=(20, 12), sharex=True, sharey=True)
 
@@ -694,6 +707,9 @@ def build_cvxpy_problem(
     rescale_constraints: bool = True,
     operators: Operators | None = None,
 ) -> Minimizer:
+    import cvxpy as cp
+    from scipy import linalg, sparse
+
     if operators is None:
         operators = build_operators(model)
 
@@ -1074,6 +1090,7 @@ def _tighten_kinematic_anchors(
                    ,`:::::::::,-`/         |
                   /::::::::,-`  /          |
                 ,`::::::,-`    /           |
+                ,`::::::,-`    /           |
                /:::::,-`      /            |
              ,`:::,-`        /             |
             /::,-`          /              |
@@ -1355,6 +1372,9 @@ class MinimizerTrace:
 
 def _custom_cvxopt_solve(problem: cp.Problem, **kwargs):
     """Solve a cvxpy problem with the clarabel reduction but cvxopt solver."""
+    import cvxopt
+    import cvxpy as cp
+
     data, chain, inverse_data = problem.get_problem_data(
         cp.CLARABEL,
         ignore_dpp=kwargs.get("ignore_dpp", True),
@@ -1685,4 +1705,5 @@ def benchmark_solve(
         "objective": objective,
         "rescale_parameters": rescale_parameters,
         "rescale_constraints": rescale_constraints,
+        "operators": operators,
     }

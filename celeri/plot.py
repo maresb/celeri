@@ -3,18 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-import cartopy.io.shapereader as shpreader
-import colorcet as cc
-import matplotlib.collections as mc
-import matplotlib.lines as mlines
-import matplotlib.patches as mpatches
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from loguru import logger
-from matplotlib import cm
-from matplotlib.colors import LinearSegmentedColormap, Normalize
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from shapely.geometry import (
     GeometryCollection,
     LineString,
@@ -99,6 +90,8 @@ class PlotParams:
 
 
 def plot_block_labels(segment, block, station, closure):
+    import matplotlib.pyplot as plt
+
     plt.figure()
     plt.title("West and east labels")
     for i in range(closure.n_polygons()):
@@ -161,6 +154,9 @@ def plot_input_summary(
         lat_range (Tuple): Latitude range (min, max)
         quiver_scale (float): Scaling for velocity arrows
     """
+    import matplotlib.collections as mc
+    import matplotlib.pyplot as plt
+
     if lon_range is None:
         lon_range = model.config.lon_range
     if lat_range is None:
@@ -386,6 +382,8 @@ def plot_estimation_summary(
         lat_range (Tuple): Latitude range (min, max)
         quiver_scale (float): Scaling for velocity arrows
     """
+    import matplotlib.pyplot as plt
+
     if lon_range is None:
         lon_range = model.config.lon_range
     if lat_range is None:
@@ -607,6 +605,8 @@ def plot_estimation_summary(
 
 
 def plot_matrix_abs_log(matrix):
+    import matplotlib.pyplot as plt
+
     plt.figure(figsize=(10, 10))
     plt.imshow(np.log10(np.abs(matrix + EPS)), cmap="plasma_r")
     plt.colorbar()
@@ -623,7 +623,9 @@ def plot_mesh(
     cmap="seismic",
     center=0,
 ):
+    import matplotlib.collections as mc
     import matplotlib.colors as colors
+    import matplotlib.pyplot as plt
 
     if not ax:
         ax = plt.gca()
@@ -674,6 +676,8 @@ def plot_segment_displacements(
     lat_max,
     quiver_scale,
 ):
+    import matplotlib.pyplot as plt
+
     u_east, u_north, u_up = get_okada_displacements(
         segment.lon1.values[segment_idx],
         segment.lat1[segment_idx],
@@ -717,6 +721,8 @@ def plot_segment_displacements(
 
 
 def plot_strain_rate_components_for_block(closure, segment, station, block_idx):
+    import matplotlib.pyplot as plt
+
     # TODO These get_strain_rate_displacements calls don't have the correct arguments?
     plt.figure(figsize=(10, 3))
     plt.subplot(1, 3, 1)
@@ -800,6 +806,8 @@ def plot_strain_rate_components_for_block(closure, segment, station, block_idx):
 
 
 def plot_rotation_components(closure, station):
+    import matplotlib.pyplot as plt
+
     plt.figure(figsize=(10, 3))
     plt.subplot(1, 3, 1)
     vel_east, vel_north, vel_up = get_rotation_displacements(
@@ -925,6 +933,8 @@ def get_default_plotting_options(config, estimation, station):
         - segment_line_color_inner: "w" - Inner line color for segments.
 
     """
+    from matplotlib import cm
+
     slip_rate_scale = 0.5 * np.max(
         (
             np.abs(estimation.strike_slip_rates),
@@ -991,6 +1001,8 @@ def plot_common_elements(p, segment, lon_range, lat_range):
     6. Sets the x and y axis labels and their font sizes.
     7. Sets the tick parameters, including the label size.
     """
+    import matplotlib.pyplot as plt
+
     for i in range(len(segment)):
         plt.plot(
             [segment.lon1[i], segment.lon2[i]],
@@ -1052,6 +1064,10 @@ def plot_vel_arrows_elements(p, lon, lat, east_velocity, north_velocity, arrow_s
     >>> arrow_scale = 1.0
     >>> plot_vel_arrows_elements(east_velocity, north_velocity, arrow_scale)
     """
+    import matplotlib.patches as mpatches
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import Normalize
+
     # Draw velocity vectors
     velocity_magnitude = np.sqrt(east_velocity**2.0 + north_velocity**2.0)
     norm = Normalize()
@@ -1135,6 +1151,8 @@ def plot_vels(
     3. Plots common map elements including segment lines and axis settings.
     4. Plots velocity vectors as arrows with scaling and color mapping.
     """
+    import matplotlib.pyplot as plt
+
     plt.figure(figsize=p.figsize_vectors)
     plt.title(title_string, fontsize=p.fontsize)
     plot_common_elements(p, segment, p.lon_range, p.lat_range)
@@ -1164,6 +1182,8 @@ def plot_residuals(p, segment, station):
     -------
     None
     """
+    import matplotlib.pyplot as plt
+
     mae = np.abs(station.model_east_vel_residual.values) + np.abs(
         station.model_north_vel_residual.values
     )
@@ -1234,6 +1254,9 @@ def plot_segment_rates(p, segment, estimation, rate_type, rate_scale=1):
     -------
     None
     """
+    import matplotlib.lines as mlines
+    import matplotlib.pyplot as plt
+
     plt.figure(figsize=p.figsize_vectors)
 
     if rate_type == "ss":
@@ -1383,6 +1406,9 @@ def plot_fault_geometry(p, segment, meshes):
     -------
     None
     """
+    import matplotlib.collections as mc
+    import matplotlib.pyplot as plt
+
     plt.figure(figsize=p.figsize_vectors)
 
     plot_common_elements(p, segment, p.lon_range, p.lat_range)
@@ -1432,6 +1458,8 @@ def plot_fault_geometry(p, segment, meshes):
 
 
 def plot_mesh_mode(meshes, eigenvectors_to_tde_slip, mesh_idx, mode_idx, start_idx=0):
+    import matplotlib.pyplot as plt
+
     plt.figure()
     plt.scatter(
         meshes[mesh_idx].lon_centroid,
@@ -1446,6 +1474,8 @@ def plot_mesh_mode(meshes, eigenvectors_to_tde_slip, mesh_idx, mode_idx, start_i
 
 
 def plot_tde_boundary_condition_labels(meshes, mesh_idx):
+    import matplotlib.pyplot as plt
+
     top_indices = np.asarray(np.where(meshes[mesh_idx].top_elements))
     bot_indices = np.asarray(np.where(meshes[mesh_idx].bot_elements))
     side_indices = np.asarray(np.where(meshes[mesh_idx].side_elements))
@@ -1488,6 +1518,10 @@ def plot_tde_boundary_condition_labels(meshes, mesh_idx):
 
 def plot_land(lon_min, lat_min, lon_max, lat_max):
     """Plot filled gray land within the given extent using plt."""
+    import cartopy.io.shapereader as shpreader
+    import matplotlib.patches as mpatches
+    import matplotlib.pyplot as plt
+
     extent_box = box(lon_min, lat_min, lon_max, lat_max)
 
     land_shp = shpreader.natural_earth(
@@ -1514,6 +1548,10 @@ def plot_land(lon_min, lat_min, lon_max, lat_max):
 
 def plot_coastlines(lon_min, lat_min, lon_max, lat_max):
     """Plot coastlines as black lines within the given extent using plt."""
+    import cartopy.io.shapereader as shpreader
+    import matplotlib.collections as mc
+    import matplotlib.pyplot as plt
+
     extent_box = box(lon_min, lat_min, lon_max, lat_max)
 
     coast_shp = shpreader.natural_earth(
@@ -1546,6 +1584,8 @@ def plot_coastlines(lon_min, lat_min, lon_max, lat_max):
 
 
 def plot_coupling(estimation: Estimation, *, mesh_idx: int):
+    import matplotlib.pyplot as plt
+
     operators = estimation.operators
     block = estimation.model.block
     index = operators.index
@@ -1634,6 +1674,8 @@ def plot_coupling(estimation: Estimation, *, mesh_idx: int):
 
 
 def _plot_common_evolution_elements():
+    import matplotlib.pyplot as plt
+
     plt.xlim([-90, 90])
     plt.ylim([-90, 90])
     plt.xticks([-90, 0, 90])
@@ -1642,6 +1684,8 @@ def _plot_common_evolution_elements():
 
 
 def _plot_evolution(mesh: Mesh, field1: np.ndarray, field2: np.ndarray):
+    import matplotlib.pyplot as plt
+
     LINE_COLOR = "lightgray"
     for i in range(mesh.n_tde):
         plt.plot(
@@ -1656,6 +1700,11 @@ def _plot_evolution(mesh: Mesh, field1: np.ndarray, field2: np.ndarray):
 
 
 def plot_coupling_evolution(estimation: Estimation, *, mesh_idx: int):
+    import colorcet as cc
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import LinearSegmentedColormap
+    from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+
     mesh = estimation.model.meshes[mesh_idx]
 
     if estimation.trace is None:

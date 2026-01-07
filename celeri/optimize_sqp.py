@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from loguru import logger
@@ -526,6 +525,8 @@ def solve_sqp(
 
 def plot_iterative_convergence(estimation: Estimation, *, plot_in_bounds: bool = False):
     """Plot convergence of out-of-bounds and in-bounds percentages during SQP iterations."""
+    import matplotlib.pyplot as plt
+
     meshes = estimation.model.meshes
     n_oob_vec = estimation.n_out_of_bounds_trace
     n_meshes, n_iter = n_oob_vec.shape

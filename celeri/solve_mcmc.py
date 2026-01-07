@@ -11,18 +11,11 @@ from celeri.model import Model
 from celeri.operators import Operators, build_operators
 from celeri.solve import Estimation, build_estimation
 
-if TYPE_CHECKING or importlib.util.find_spec("pymc") is None:
-    # Fallback for PyMC if not installed
-    # This is a minimal stub for PyMC to allow type checking
+if TYPE_CHECKING:
+    from pymc import Model as PymcModel
+else:
     class PymcModel:
         pass
-else:
-    from pymc import Model as PymcModel
-
-    # Apply numerical stability fix for censored Normal distributions.
-    # This is a workaround for https://github.com/pymc-devs/pymc/pull/7996
-    # Fixes issue https://github.com/brendanjmeade/celeri/issues/341
-    import celeri.censored_distribution_stability_hotfix  # noqa: F401
 
 
 DIRECTION_IDX = {
@@ -676,6 +669,10 @@ def solve_mcmc(
         )
 
     import nutpie
+    # Apply numerical stability fix for censored Normal distributions.
+    # This is a workaround for https://github.com/pymc-devs/pymc/pull/7996
+    # Fixes issue https://github.com/brendanjmeade/celeri/issues/341
+    import celeri.censored_distribution_stability_hotfix  # noqa: F401
 
     if model.config.segment_slip_rate_hard_bounds:
         raise ValueError(

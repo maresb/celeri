@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, TypeVar, cast
 
-import meshio
 import numpy as np
 from loguru import logger
 from pydantic import BaseModel, ConfigDict, model_validator
@@ -559,6 +558,8 @@ class Mesh:
     @classmethod
     def from_params(cls, config: MeshConfig):
         # Standalone reader for a single .msh file
+        import meshio
+
         mesh = {}
         filename = config.mesh_filename
 

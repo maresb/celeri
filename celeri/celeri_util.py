@@ -5,14 +5,12 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pyproj
 from loguru import logger
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
-from scipy.spatial.distance import cdist
 
 if TYPE_CHECKING:
     from celeri.config import Config
@@ -417,6 +415,8 @@ def get_3component_index(indices: np.ndarray):
 
 
 def align_velocities(df_1, df_2, distance_threshold):
+    from scipy.spatial.distance import cdist
+
     # Add block_label to dataframes if it's not there
     if "block_label" not in df_1.columns:
         df_1["block_label"] = 0
@@ -563,6 +563,8 @@ def diagnose_matrix(mat):
     Prints:
     - The index of the first rank deficient column and its rank.
     """
+    import matplotlib.pyplot as plt
+
     """
     Example call for QP solve operator
     diagnose_matrix(operators.eigen * np.sqrt(weighting_vector_eigen[:, None]))
