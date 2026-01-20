@@ -96,6 +96,9 @@ class MeshConfig(BaseModel):
         Algorithm for eigendecomposition (default "eigh"). 'eigh' (dense LAPACK) is faster for
         many modes, 'eigsh' (sparse ARPACK) is faster for few modes. Both have equivalent accuracy,
         but eigenvector signs may differ between algorithms.
+    softplus_ls : float | None
+        Length scale for softplus operations when only one bound is present.
+        If None, defaults to 1.0.
     """
 
     # Forbid extra fields when reading from JSON
@@ -154,6 +157,8 @@ class MeshConfig(BaseModel):
     coupling_sigma: float = 1.0
     elastic_sigma: float = 1.0
 
+    softplus_ls: float | None = None
+    
     # Hint for the new sqp solver about the likely range of kinematic slip rates.
     sqp_kinematic_slip_rate_hint_ss: ScalarBound = ScalarBound(
         lower=-100.0, upper=100.0
