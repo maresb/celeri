@@ -117,8 +117,9 @@ def _station_vel_from_elastic_mesh(
     kind: Literal["strike_slip", "dip_slip"],
     elastic,
     operators: Operators,
-    *,
     eigen_coefs=None,
+    upper: float | None = None,
+    lower: float | None = None,
 ):
     """Compute elastic velocity at stations from slip rates on a mesh. 
     If we have eigenmode coefficients and elastic is a linear function 
@@ -141,6 +142,10 @@ def _station_vel_from_elastic_mesh(
         If provided, use the direct eigenmode-to-velocity linear path.
         This is more efficient when elastic slip is a linear function of 
         eigenmode coefficients (i.e., no bounds/constraints applied).
+    upper : float | None, optional
+        Upper bound for the elastic slip rates.
+    lower : float | None, optional
+        Lower bound for the elastic slip rates.
 
     Returns
     -------
@@ -153,7 +158,7 @@ def _station_vel_from_elastic_mesh(
     idx = DIRECTION_IDX[kind]
     method = model.config.mcmc_station_velocity_method
 
-    if eigen_coefs is not None:
+    if upper is None and lower is None:
         assert operators.eigen is not None
         to_velocity = _get_eigen_to_velocity(
             model,
@@ -274,6 +279,9 @@ def _coupling_component(
         kind,
         elastic_tde,
         operators,
+        eigen_coefs=coefs,
+        upper=upper,
+        lower=lower,
     )
     return elastic_tde, station_vels.astype("d")
 
@@ -317,7 +325,9 @@ def _elastic_component(
         kind,
         elastic_tde,
         operators,
-        eigen_coefs=param if (lower is None and upper is None) else None,
+        eigen_coefs=param,
+        upper=upper,
+        lower=lower,
     )
 
     return elastic_tde, station_vels
