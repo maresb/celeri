@@ -67,7 +67,7 @@ jax = { version = ">=0.8, <0.9", extras = ["cuda12"] }
 tfp-nightly = "*"
 
 [target.osx-arm64.dependencies]
-libblas = { version = "*", build = "*_newaccelerate" }
+libblas = { version = "*", build = "*_*accelerate" }
 
 [feature.dev.dependencies]
 pre-commit = "*"
