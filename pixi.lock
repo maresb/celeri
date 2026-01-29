@@ -633,7 +633,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zlib-1.3.1-hb9d3cd8_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zlib-ng-2.3.2-hceb46e0_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb78ec9c_6.conda
-      - pypi: https://files.pythonhosted.org/packages/8f/aa/ba0014cc4659328dc818a28827be78e6d97312ab0cb98105a770924dc11e/absl_py-2.3.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/18/a6/907a406bb7d359e6a63f99c313846d9eec4f7e6f7437809e03aa00fa3074/absl_py-2.4.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e5/0a/f4d72ffb64ab3edc1fa66261f81ee3b4142ab14cd8aa1dfc7bbeca5ee4ba/dm_tree-0.1.9-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/1d/33/f1c6a276de27b7d7339a34749cc33fa87f077f921969c47185d34a887ae2/gast-0.7.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f9/52/b8eea98dd5e9167ed9162a700cdb3040dfcf52e285bd33c548a6fb5f6a8c/h5py_stubs-0.1.2-py3-none-any.whl
@@ -657,7 +657,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/64/b9/6ab941001c23cfb43499b5b0b7417b0bb4dfba3a29ffa2b06985422dad50/nvidia_nvshmem_cu12-3.5.19-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/9a/c9/010fa37a6b83e6fd6afb9434d9b71d454ad3d420d35205aeb333f0227e65/okada_wrapper-24.6.15.tar.gz
       - pypi: https://files.pythonhosted.org/packages/3f/ee/8c483b9384f269a14f62fa9760d0021273d1786128273ee14962468d9114/scikit_learn_stubs-0.0.3-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/96/8d/5751d380b21143c065c149b069d578dfd78df656d6b3fb752264a5f2771d/tfp_nightly-0.26.0.dev20260126-py2.py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/f1/84/9889d4522e6044ce1a7887cb5ef2808502a3a5776349edc4c111fd072976/tfp_nightly-0.26.0.dev20260129-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e5/a9/554ac40810e530263b6163b30a2b623bc16aae3fb64416f5d2b3657d0729/types_shapely-2.1.0.20250917-py3-none-any.whl
       - pypi: ./
       osx-64:
@@ -2322,11 +2322,11 @@ packages:
   purls: []
   size: 8191
   timestamp: 1744137672556
-- pypi: https://files.pythonhosted.org/packages/8f/aa/ba0014cc4659328dc818a28827be78e6d97312ab0cb98105a770924dc11e/absl_py-2.3.1-py3-none-any.whl
+- pypi: https://files.pythonhosted.org/packages/18/a6/907a406bb7d359e6a63f99c313846d9eec4f7e6f7437809e03aa00fa3074/absl_py-2.4.0-py3-none-any.whl
   name: absl-py
-  version: 2.3.1
-  sha256: eeecf07f0c2a93ace0772c92e596ace6d3d3996c042b2128459aaae2a76de11d
-  requires_python: '>=3.8'
+  version: 2.4.0
+  sha256: 88476fd881ca8aab94ffa78b7b6c632a782ab3ba1cd19c9bd423abc4fb4cd28d
+  requires_python: '>=3.10'
 - conda: https://conda.anaconda.org/conda-forge/noarch/adwaita-icon-theme-49.0-unix_0.conda
   sha256: a362b4f5c96a0bf4def96be1a77317e2730af38915eb9bec85e2a92836501ed7
   md5: b3f0179590f3c0637b7eb5309898f79e
@@ -4826,8 +4826,8 @@ packages:
   timestamp: 1768852915341
 - pypi: ./
   name: celeri
-  version: 0.0.4.post1.dev371+gdeb386e07
-  sha256: 825e621952699388bf1ab421f3c868a9ecdf1904d63f1aae83b14532130a8e59
+  version: 0.0.4.post1.dev430+g1144afb55.d20260129
+  sha256: 369b4b921323b3a249dcc2901469286c87369f301b2ab31dd8606ad100ebb54d
   requires_dist:
   - cartopy
   - colorcet
@@ -23994,10 +23994,10 @@ packages:
   - pkg:pypi/terminado?source=hash-mapping
   size: 24749
   timestamp: 1766513766867
-- pypi: https://files.pythonhosted.org/packages/96/8d/5751d380b21143c065c149b069d578dfd78df656d6b3fb752264a5f2771d/tfp_nightly-0.26.0.dev20260126-py2.py3-none-any.whl
+- pypi: https://files.pythonhosted.org/packages/f1/84/9889d4522e6044ce1a7887cb5ef2808502a3a5776349edc4c111fd072976/tfp_nightly-0.26.0.dev20260129-py2.py3-none-any.whl
   name: tfp-nightly
-  version: 0.26.0.dev20260126
-  sha256: 282e17d792c0231df2a52f3396b0ef13887baa94f95a2cab23c298a72eb0acd1
+  version: 0.26.0.dev20260129
+  sha256: 258b11699364e52668925c94370b32762739bd9fe52a0a765a9d3816411bc0a3
   requires_dist:
   - absl-py
   - six>=1.10.0
